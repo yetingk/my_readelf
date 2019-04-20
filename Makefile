@@ -1,6 +1,6 @@
 CC = gcc
 CFLAG = -std=c99
-OBJS = main.o elf_head.o
+OBJS = main.o ehdr.o phdr.o shdr.o
 
 all: my_readelf
 
@@ -12,3 +12,4 @@ my_readelf: $(OBJS)
 
 clean:
 	rm -f *.o my_readelf
+		

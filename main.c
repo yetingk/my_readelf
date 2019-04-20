@@ -1,7 +1,7 @@
 #include "my_elf.h"
 
 int main (int argc, char * const * argv) {
-    Elf64_Ehdr elf;
+    Elf64_Ehdr ehdr;
     char *file_name;
     
     for (int i = 0; i < argc; ++i) {
@@ -13,33 +13,52 @@ int main (int argc, char * const * argv) {
     }
     
     /* check which flag is raised */
-    bool head = false;
+    bool elf = false;
+    bool program = false;
+    bool section = false;
     int c;
-    while ((c = getopt(argc, argv, "h")) != EOF) {
+    while ((c = getopt(argc, argv, "hlS")) != EOF) {
         switch (c) {
         case 'h':
-            head = true;
+            elf = true;
+            break;
+        case 'l':
+            program = true;
+            break;
+        case 'S':
+            section = true;
             break;
         }
     }
     
     
-    FILE *fp = fopen(file_name, "r");
-    if (!fp)
+    int fd = open(file_name, O_RDONLY);
+    if (fd < 0)
         fatal("error: open\n");
 
-    memset(elf.e_ident, 0, EI_NIDENT);
-    fread(elf.e_ident, EI_NIDENT, 1, fp);
-    fclose(fp);
+    read(fd, &ehdr, sizeof(Elf64_Ehdr));
+    //close(fd);
     
     /* check this file is ELF or not */
-    if (elf.e_ident[EI_MAG0] != 0x7f ||
-        elf.e_ident[EI_MAG1] != 0x45 ||
-        elf.e_ident[EI_MAG2] != 0x4c ||
-        elf.e_ident[EI_MAG3] != 0x46) {
+    if (!valid_ELF(&ehdr)) {
         fatal("my_readelf: Error: Not an ELF file - it has the wrong magic bytes at the start\n");
     }
     
-    if (head) 
-        elf_head(&elf);
+    if (elf) 
+        elf_head(&ehdr);
+
+    if (program)
+        print_phdr(fd, &ehdr);
+
+    if (section)
+        print_shdr(fd, &ehdr);
+
+    close(fd);
+}
+
+bool valid_ELF(const Elf64_Ehdr *elf) {
+    return elf->e_ident[EI_MAG0] == 0x7f &&
+           elf->e_ident[EI_MAG1] == 0x45 && 
+           elf->e_ident[EI_MAG2] == 0x4c && 
+           elf->e_ident[EI_MAG3] == 0x46;
 }
