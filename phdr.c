@@ -1,27 +1,14 @@
 #include "my_elf.h"
 
-void print_phdr(int fd, const Elf64_Ehdr *e) {
-    Elf64_Phdr *phdr_table = NULL; 
-    char *buf = NULL;
-    const char *tmp = NULL;
+void print_phdr(Elf64_Phdr *phdr_table, uint16_t phdr_num) {
+    char *tmp, *buf = NULL;
     
-    // allocat memory we needed.
-    size_t size = 128 * e->e_phnum;
-    if ((phdr_table = malloc(size)) == NULL)
-        fatal("my_readelf: malloc: %s",strerror(errno));
-
-    if ((buf = malloc(size)) == NULL) 
-        fatal("my_readelf: malloc: %s",strerror(errno));
-    
-    // make sure strcat() can work correctly.
+    // allocat buffer size to print phdr data.
+    buf = (char *)malloc(phdr_num * 128);
     buf[0] = '\0';
     
-    // move to the program header table.
-    lseek(fd, e->e_phoff, SEEK_SET);
-    read(fd, phdr_table, e->e_phnum * sizeof(Elf64_Phdr));
-    
     char flag[5] = {[4] = '\0',};
-    for (int i = 0; i < e->e_phnum; ++i) {
+    for (int i = 0; i < phdr_num; ++i) {
         switch (phdr_table[i].p_type) {
         case PT_NULL   : tmp = "NULL    "; break;
         case PT_LOAD   : tmp = "LOAD    "; break;
@@ -68,5 +55,4 @@ void print_phdr(int fd, const Elf64_Ehdr *e) {
     
     // free allocated space.
     free(buf);
-    free(phdr_table);
 }

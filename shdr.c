@@ -1,31 +1,49 @@
 #include "my_elf.h"
 
-void print_shdr(int fd, const Elf64_Ehdr *e) {
-    Elf64_Shdr *shdr_table = NULL; 
-    char *buf = NULL;
-    const char *tmp = NULL;
+void print_shdr(Elf64_Shdr *sh_table, char *name_table,
+                uint16_t sh_num) {
     
-    // allocat memory we needed.
-    size_t size = 128 * e->e_shnum;
-    if ((shdr_table = malloc(size)) == NULL)
-        fatal("my_readelf: malloc: %s",strerror(errno));
-
-    if ((buf = malloc(size)) == NULL) 
-        fatal("my_readelf: malloc: %s",strerror(errno));
-    
-    // make sure strcat() can work correctly.
+    // allocat memory to store data to print.
+    char *buf = malloc(sh_num * 128);
+    if (buf == NULL)
+        fatal("my_readelf: malloc: %s\n",strerror(errno));
     buf[0] = '\0';
     
-    // move to the program header table.
-    lseek(fd, e->e_shoff, SEEK_SET);
-    read(fd, shdr_table, e->e_shnum * sizeof(Elf64_Shdr));
+    char tmp[32];
+    for (int i = 0; i < sh_num; ++i) {
+        // section name
+        int str_index = sh_table[i].sh_name;
+        sprintf(tmp, "%s ", &name_table[str_index]);
+        strcat(buf, tmp);
+        
+        // section type
+        const char *str = NULL;
+        switch(sh_table[i].sh_type) {
+        case SHT_NULL    : str = "NULL        "; break;
+        case SHT_PROGBITS: str = "PROGRAMBITS "; break;
+        case SHT_SYMTAB  : str = "SYMTAB      "; break;
+        case SHT_STRTAB  : str = "STRTAB      "; break;
+        default          : str = "OTHER       "; break;
+        }
+        
+        // virtual address
+        sprintf(tmp, "%016lx ", sh_table[i].sh_addr);
+        strcat(buf, tmp);
 
-    for (int i = 0; i < e->e_shnum; ++i) {
-        printf("%d ", shdr_table[i].sh_name);
+        // offset of the section in the file image.
+        sprintf(tmp, "%016lx ", sh_table[i].sh_offset);
+        strcat(buf, tmp);
+
+        // Size in bytes of the section in the file image. May be 0.
+        sprintf(tmp, "%016lx ", sh_table[i].sh_size);
+        strcat(buf, tmp);
+
+        // the whole 
+        sprintf(tmp, "%016lx\n", sh_table[i].sh_entsize);
+        strcat(buf, tmp);
     }
 
-    printf("\n");
+    printf("%s", buf);
 
-    free(shdr_table);
     free(buf);
 }

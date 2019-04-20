@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -17,8 +18,8 @@
         fprintf(stderr, __VA_ARGS__); \
         exit(EXIT_FAILURE);           \
     } while(0)
-void elf_head (const Elf64_Ehdr *elf);
-void print_phdr(int fd, const Elf64_Ehdr *elf);
-void print_shdr(int fd, const Elf64_Ehdr *elf);
-bool valid_ELF(const Elf64_Ehdr *e);
+void elf_head (Elf64_Ehdr *);
+void print_phdr(Elf64_Phdr *, uint16_t);
+void print_shdr(Elf64_Shdr *, char *, uint16_t);
+bool valid_ELF(const Elf64_Ehdr *);
 #endif /* MY_ELF_H */
