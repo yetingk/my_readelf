@@ -53,14 +53,34 @@ int main (int argc, char * const * argv) {
     }
     
     if (program) {
-        Elf64_Phdr *ph_table = (Elf64_Phdr *)(file + ehdr->e_phoff);
-        print_phdr(ph_table, ehdr->e_phnum);
+        void *ph_table = file + ehdr->e_phoff;
+        switch (ehdr->e_ident[EI_CLASS]) {
+        case ELFCLASS64:
+            print_phdr64 ((Elf64_Phdr *)ph_table, ehdr->e_phnum);
+            break;
+        case ELFCLASS32:
+            print_phdr32 ((Elf32_Phdr *)ph_table, ehdr->e_phnum);
+            break;
+        default:
+            fatal("my_readelf: only support 32-bit and 64-bit format.\n");
+        }
     }
 
     if (section) {
-        Elf64_Shdr *sh_table = (Elf64_Shdr *)(file + ehdr->e_shoff);
-        char *name_table = (char *)(file + sh_table[ehdr->e_shstrndx].sh_offset);
-        print_shdr(sh_table, name_table, ehdr->e_shnum);
+        void *sh_table = file + ehdr->e_shoff;
+        char *name_table = NULL;
+        switch (ehdr->e_ident[EI_CLASS]) {
+        case ELFCLASS64:
+            name_table = (char *)(file + ((Elf64_Shdr *) sh_table)[ehdr->e_shstrndx].sh_offset);
+            print_shdr64((Elf64_Shdr *)sh_table, name_table, ehdr->e_shnum);
+            break;
+        case ELFCLASS32:
+            name_table = (char *)(file + ((Elf32_Shdr *)sh_table)[ehdr->e_shstrndx].sh_offset);
+            print_shdr32((Elf32_Shdr *)sh_table, name_table, ehdr->e_shnum);
+            break;
+        default:
+            fatal("my_readelf: only support 32-bit and 64-bit format.\n");
+        }
     }
 
     // free allocated resource.

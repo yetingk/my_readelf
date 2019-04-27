@@ -19,7 +19,9 @@
         exit(EXIT_FAILURE);           \
     } while(0)
 void elf_head (Elf64_Ehdr *);
-void print_phdr(Elf64_Phdr *, uint16_t);
-void print_shdr(Elf64_Shdr *, char *, uint16_t);
+void print_phdr64(Elf64_Phdr *, uint16_t);
+void print_phdr32(Elf32_Phdr *, uint16_t);
+void print_shdr64(Elf64_Shdr *, char *, uint16_t);
+void print_shdr32(Elf32_Shdr *, char *, uint16_t);
 bool valid_ELF(const Elf64_Ehdr *);
 #endif /* MY_ELF_H */
